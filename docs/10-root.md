@@ -1,10 +1,10 @@
 # 10 — Root: Magisk (and why it fights PHH/TrebleDroid GSIs)
 
-> **Status on the reference device:** Magisk 31.1 boots, `magiskd` runs, and Magisk's `su`
-> works. However the TrebleDroid/PHH ROM ships its own root (`phh-su`) which **takes over
-> Magisk's ramdisk binary** on later boots, so Magisk's `post-fs-data` / `boot-complete`
-> stages stop running and modules (Zygisk, LSPosed/Vector, Iconify) do **not** load reliably.
-> Root itself is available through `phh-su`. Read §10.7 before promising modules.
+> **Status on the reference device:** Magisk 31.1 boots and `magiskd` runs, but the
+> TrebleDroid/PHH ROM ships its own root (`phh-su`) which **takes over Magisk's ramdisk
+> binary** on later boots. Magisk's `post-fs-data` / `boot-complete` stages then stop
+> running, so modules (Zygisk, LSPosed/Vector, Iconify) do **not** load reliably. Root
+> itself remains available through `phh-su`. Read §10.7 before promising modules.
 
 ---
 
@@ -76,10 +76,27 @@ file of the same size (8,388,608 bytes) mean success.
 
 ```bash
 adb shell getprop sys.boot_completed
-adb shell 'ps -A | grep magiskd'
-adb shell 'su -c id'                       # uid=0(root)
-adb shell '/debug_ramdisk/magisk -v'       # 31.1:MAGISK:R
+adb shell 'ps -A | grep magiskd'            # daemon present
+adb shell '/data/adb/magisk/magisk -v'      # 31.1:MAGISK:R
+adb shell 'su -c id'                        # uid=0(root)  ← may be phh-su, see below
 ```
+
+Be precise about **which** root answered. On a PHH/TrebleDroid GSI:
+
+```bash
+adb shell 'which -a su'                     # /system/xbin/su  (phh-su) comes first
+adb shell 'md5sum /debug_ramdisk/magisk /system/xbin/su'   # identical after 1-2 boots
+adb shell '/debug_ramdisk/magisk -v'        # "17 me.phh.superuser ..." if hijacked
+```
+
+`magiskd` running + `magisk -v` reporting 31.1 proves Magisk **installed**; it does not prove
+Magisk's **boot stages** are alive. Check those separately:
+
+```bash
+adb logcat -d -b all | grep -E 'post-fs-data mode|late_start|boot-complete'
+```
+
+No output = Magisk's stages are not running (see §10.5 and §10.7).
 
 Magisk 31.x specifics (important):
 

@@ -35,8 +35,8 @@ Application packages used:
 | Build | `treble_arm64_bvS-userdebug 15 BP1A.250405.007 250414 test-keys` |
 | Boot slot | B (`ro.boot.slot_suffix=_b`), marked successful |
 | Verified boot | `orange` (unlocked) |
-| GMS | 24.28.35 |
-| Play Store | 41.9.17 |
+| GMS | 24.28.35 at sign-in time (auto-updated later) |
+| Play Store | 41.9.17 at sign-in time |
 | WebView provider | `com.android.webview` (pinned) |
 | Font | `InterVariable.ttf`, 9 refs in `/system/etc/fonts.xml` |
 | Home | `app.lawnchair/.LawnchairLauncher` |
