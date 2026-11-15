@@ -67,6 +67,7 @@ docs/
   12-rescue.md                rollback + bootloop recovery
   13-troubleshooting.md       symptom → cause → fix table
   14-verified-manifest.md     artifact hashes and version matrix
+  hinglish-quickstart.md      short Hinglish version of the whole procedure
 devices/
   lava-s91-lt4901.md          full case study: what really happened
 scripts/
@@ -121,6 +122,15 @@ manifests/
 5. **Some OEMs ship root already** (PHH/TrebleDroid builds include `phh-su`). That root
    collides with Magisk — see [`docs/10-root.md`](docs/10-root.md).
 6. **Never relock a bootloader with a GSI installed.** It can hard-brick.
+
+---
+
+## Downloads
+
+Prebuilt artifacts (final system image, stock/patched `init_boot`) are attached to
+[Releases](https://github.com/ismailmo9090-del/android-gsi-oneui-playbook/releases) — see
+[`RELEASES.md`](RELEASES.md) for hashes and restore commands. The repository itself only
+contains text and scripts.
 
 ---
 
