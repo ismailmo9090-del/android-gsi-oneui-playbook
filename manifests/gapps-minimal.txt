@@ -1,0 +1,33 @@
+# Minimal MindTheGapps subset for a 2.9 GB system image
+# Paths are relative to the extracted GApps root (which contains system/).
+# One entry per line. '#' comments are ignored.
+#
+# Keep: GMS core, Play Store, GSF, partner setup, sync adapters, overlays,
+#       permissions XML and native libs. Drop the rest.
+
+system/product/app/GoogleCalendarSyncAdapter
+system/product/app/GoogleContactsSyncAdapter
+system/product/app/MarkupGoogle_v2
+system/product/app/PrebuiltExchange3Google
+system/product/app/SpeechServicesByGoogle
+system/product/etc
+system/product/framework
+system/product/lib64
+system/product/overlay
+system/product/priv-app/GmsCore
+system/product/priv-app/GooglePartnerSetup
+system/product/priv-app/Phonesky
+system/system_ext/etc
+system/system_ext/priv-app/GoogleFeedback
+system/system_ext/priv-app/GoogleServicesFramework
+
+# Deliberately NOT included (trim to save space; add back only if needed):
+# system/product/app/Velvet
+# system/product/app/VelvetTitan
+# system/product/app/talkback
+# system/product/priv-app/Wellbeing
+# system/product/priv-app/GoogleRestore
+# system/product/priv-app/SetupWizard
+# system/product/app/YouTube
+# system/product/app/Gmail2
+# system/product/app/Maps

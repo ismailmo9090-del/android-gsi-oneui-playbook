@@ -1,0 +1,20 @@
+# Large artifacts — never commit these
+*.img
+*.img.xz
+*.gz
+*.apk
+*.zip
+*.parts/
+*.tmp
+gapps-debugfs.txt
+gapps-labels.txt
+fonts_inter.xml
+
+# Local notes / sensitive output
+inventory.txt
+session-log.md
+*.log
+
+# python
+__pycache__/
+*.pyc

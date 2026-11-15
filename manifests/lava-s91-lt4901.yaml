@@ -1,0 +1,113 @@
+# Verified artifact manifest — Lava S91 (LT4901)
+# Regenerate hashes with: sha256sum <file>
+# NOTE: serial numbers / account identifiers are intentionally absent.
+
+device:
+  marketing: "Lava S91"
+  model: "LT4901"
+  board: "tb8786p1_64_k66"
+  soc: "MediaTek MT8786"
+  stock_build: "AP3A.240905.015.A2"
+  stock_android: 15
+  vendor_sdk: 35
+  abi: "arm64-v8a"
+  slots: "A/B (slot A empty from factory)"
+  dynamic_partitions: true
+  page_size: 4096
+  density_dpi: 240
+
+partitions:
+  super_bytes: 9663676416
+  userdata_bytes: 51528040448
+  userdata_fs: "f2fs"
+  metadata_bytes: 67108864
+  boot_bytes: 67108864
+  init_boot_bytes: 8388608
+  # physical node mapping observed on this unit (do not assume for others)
+  map:
+    boot_a: mmcblk0p24
+    boot_b: mmcblk0p41
+    init_boot_a: mmcblk0p26
+    init_boot_b: mmcblk0p43
+    vbmeta_a: mmcblk0p5
+    vbmeta_b: mmcblk0p8
+    vbmeta_system_a: mmcblk0p6
+    vbmeta_system_b: mmcblk0p9
+    vbmeta_vendor_a: mmcblk0p7
+    vbmeta_vendor_b: mmcblk0p10
+    boot_para: mmcblk0p32
+    metadata: mmcblk0p12
+
+gsi:
+  source: "TrebleDroid"
+  release: "ci-20250415"
+  android: "15.0.0_r26"
+  build_id: "BP1A.250405.007"
+  build_flavor: "treble_arm64_bvS-userdebug"
+  url: "https://github.com/TrebleDroid/treble_experimentations/releases/download/ci-20250415/system-td-arm64-ab-vanilla.img.xz"
+  decompressed_bytes: 2147311616
+  decompressed_sha256: "ac1553fc6ea01ba62d61672d43de5cea8952557ea693e50c15f2e2a312f8ae04"
+
+images:
+  vanilla:
+    file: "td_a15_arm64-ab-vanilla.img"
+    bytes: 2147311616
+    sha256: "ac1553fc6ea01ba62d61672d43de5cea8952557ea693e50c15f2e2a312f8ae04"
+  with_gapps:
+    file: "td_a15_gapps.img"
+    bytes: 2936012800
+    sha256: "d8f17822bbf728576ee8ce20eed4ad689c08cdc999e94aa338113d26c0ab5cad"
+    changes: "MindTheGapps A15 subset + SELinux labels"
+  final_ui:
+    file: "td_a15_ui.img"
+    bytes: 2936012800
+    sha256: "8fd8167f2fdb0e7a4c00746214387e0ba80a882d298cd2a16c3c2ccc78b9934e"
+    changes: "with_gapps + Inter variable font in sans-serif family"
+
+boot_images:
+  init_boot_b_stock:
+    file: "init_boot_b_stock.img"
+    bytes: 8388608
+    sha256: "a2ff249a9e5fb4fb2a37ade12ba9bcf84b7f35da1172f12d22b9d119f96432b1"
+    note: "rollback image for Magisk"
+  init_boot_b_magisk:
+    file: "init_boot_b_magisk.img"
+    bytes: 8388608
+    sha256: "a210325af7665aef5846097fb753001c14d3c50e6af46ccc1fcae256244e506f"
+    note: "patched with Magisk 31.1 boot_patch.sh"
+
+software:
+  gapps:
+    package: "MindTheGapps A15 (trimmed)"
+    gms_version: "24.28.35"
+    play_store_version: "41.9.17"
+    webview: "com.android.webview"
+  launcher:
+    name: "Lawnchair"
+    version: "15 Beta 3"
+    package: "app.lawnchair"
+    activity: "app.lawnchair/.LawnchairLauncher"
+  icon_pack:
+    name: "OneUI 8.5 icon pack"
+    package: "com.debojyoti.oneui_icpack"
+  root:
+    magisk: "31.1"
+    magisk_package: "com.topjohnwu.magisk"
+    framework: "Vector v2.2 canary 3119 (zygisk_vector module)"
+    ui_tweaks: "Iconify 7.3.0 FOSS"
+    status: "phh-su functional; Magisk module/Zygisk stability limited (see docs/10.7)"
+
+final_state:
+  slot: "b"
+  slot_marked_successful: true
+  verified_boot_state: "orange"
+  font: "InterVariable.ttf (9 refs in /system/etc/fonts.xml)"
+  navigation: "gestural"
+  data_wiped_after_initial_flash: false
+
+known_limitations:
+  - "No public stock firmware: cannot return to the OEM ROM"
+  - "Slot A physically empty: no rescue slot"
+  - "Play Integrity / banking apps fail"
+  - "Magisk + Zygisk modules unreliable due to built-in phh-su"
+  - "No Samsung apps / OneUI Settings / AOD on a GSI"
