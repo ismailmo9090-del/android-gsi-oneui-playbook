@@ -24,6 +24,8 @@ ones that failed, is documented with the exact commands and the reason it works.
 | SELinux | The `unlabeled` → `system_file` fix that makes GMS stop crashing | no |
 | Fonts | Replacing Roboto with a variable font (Inter) correctly | no |
 | First boot | WebView / Play Store / slot-success fixes | no |
+| Audio | Bluetooth A2DP provider mismatch (earbuds "connected, no sound") | no |
+| Calls | Earpiece routing trap + no usable MTK IMS (HIDL-only APKs) + floss-ims swallowing MT calls — works over CS/CSFB on **every** SIM | no |
 | Look & feel | Lawnchair + OneUI icon pack + gestures + wallpapers | no |
 | Root | Headless Magisk patch of `init_boot`, module install, Zygisk | yes |
 | Rescue | Rollback and bootloop recovery for every irreversible step | no |
@@ -67,6 +69,8 @@ docs/
   12-rescue.md                rollback + bootloop recovery
   13-troubleshooting.md       symptom → cause → fix table
   14-verified-manifest.md     artifact hashes and version matrix
+  15-bluetooth-audio-hal.md   BT A2DP "connected but speaker" — provider mismatch fix
+  16-call-audio-ims.md        calls dead/silent/incoming missing — vendor audio-policy patch + CS/CSFB lock
   hinglish-quickstart.md      short Hinglish version of the whole procedure
 devices/
   lava-s91-lt4901.md          full case study: what really happened
@@ -102,6 +106,7 @@ manifests/
 [clean GSI + Play Store]
    │  fix WebView implementation
    │  install Lawnchair + icon pack, set home + gestural nav
+   │  BT audio prop + vendor call-audio policy + CS/CSFB lock (SIM-independent)
    │  (optional) patch init_boot with Magisk, flash, install modules
    ▼
 [OneUI-flavoured daily driver]

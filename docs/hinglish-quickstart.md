@@ -88,13 +88,41 @@ chahiye to ROM ka built-in `su` kaafi hai.
 | recovery me boot ho raha | GSI version mismatch ya data format nahi hua |
 | Play Store sign-in par band | `cmd webviewupdate set-webview-implementation com.android.webview` |
 | GMS crash | SELinux labels missing — `docs/07` |
+| Bluetooth earbuds connect par awaaz speaker se | `adb shell su -c 'setprop persist.bluetooth.system_audio_hal.enabled false'` + reboot — detail `docs/15` |
+| Incoming call nahi aati / outgoing me ringback nahi | floss-ims register kar raha hai — uninstall + `flossims` off, detail `docs/16` |
+| Call connect hoti hai par awaaz nahi / har baar Speaker dabana | vendor audio policy me Earpiece — patch karna padta hai, `docs/16` |
 | boot loop after Magisk | `fastboot flash init_boot_b init_boot_b_stock.img` |
 
 Poori rescue guide: `docs/12-rescue.md`.
 
 ---
 
-## 7. Kya sach me possible nahi
+## 7. Call nahi lag rahi / call me awaaz nahi
+
+Teen alag problem hoti hain, sab **SIM/operator se independent**:
+
+1. **Incoming call kabhi nahi aati**, outgoing jaati hai par ringback nahi: floss-ims
+   (`me.phh.ims`) ne IMS register kar liya hai aur MT call handle nahi karta. Wo APK uninstall
+   karo, `flossims` overlay off, `persist.sys.phh.ims.floss=false` — phir calls CS/CSFB se
+   chalti hain (`docs/16` §16.5).
+2. **Call connect nahi hoti** (LTE-only area me): is vendor par koi IMS register nahi kar sakta
+   (AIDL radio vs phh ke HIDL-only `ims-mtk-*`). 2G/3G wale area me CS/CSFB se chalti hai.
+3. **Call connect hoti hai par awaaz nahi, ya har baar Speaker dabana padta hai**: vendor ka
+   audio policy ek "Earpiece" declare karta hai jo tablet me hi nahi hai — `audioserver` crash
+   hota hai. Vendor policy se Earpiece ke chaar block hataane padte hain (`docs/16`).
+
+Flash kit wale PC par ek command:
+
+```bash
+./call-audio-fix.sh          # vendor patch + CS/CSFB lock + reboot + verify
+./call-audio-fix.sh --verify
+./call-audio-fix.sh --rollback   # stock vendor wapas
+```
+
+Data safe rehta hai (`userdata` touch nahi hota). `flash-lt4901.sh` ye kaam naye tablet par
+khud kar deta hai.
+
+## 8. Kya sach me possible nahi
 
 - Samsung Settings, Dialer, Camera, Weather, AOD, Knox → **nahi**
 - "Bilkul S25 jaisa" → **nahi**, launcher + icons + font se 80% feel aa jaata hai

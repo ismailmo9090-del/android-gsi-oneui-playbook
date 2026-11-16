@@ -82,9 +82,13 @@ if "$ADB" get-state >/dev/null 2>&1; then
   esac
 
   cur=$(g 'bootctl get-current-slot')
-  [ -n "$cur" ] && ok "current slot index: $cur" || skip "bootctl unavailable"
-  marked=$(g "bootctl is-slot-marked-successful $cur")
-  [ "$marked" = "1" ] && ok "slot marked successful" || bad "slot not marked successful (docs/05.5)"
+  if [ -n "$cur" ]; then
+    ok "current slot index: $cur"
+    marked=$(g "bootctl is-slot-marked-successful $cur")
+    [ "$marked" = "1" ] && ok "slot marked successful" || bad "slot not marked successful (docs/05.5)"
+  else
+    skip "bootctl unavailable (try 'adb root' first)"
+  fi
 
   wv=$(g "dumpsys webviewupdate | grep -i -m1 'Current WebView package'")
   [ -n "$wv" ] && ok "webview: $wv" || skip "webview provider unknown"

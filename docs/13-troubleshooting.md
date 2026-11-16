@@ -83,7 +83,33 @@ documented step. When a new symptom appears, append it with the exact command ou
 | High idle drain | GMS/Play services on a GSI | restrict background, disable unused Google apps |
 | Random reboots | vendor/GSI mismatch | check `last_kmsg`/pstore, try another GSI |
 
-## 13.8 Collecting evidence for a bug report
+## 13.8 Audio / Bluetooth
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Earbuds connect, media plays on speaker | BT stack uses GSI `sysbta` provider but the vendor audio HAL expects `vendor/default` | `adb shell su -c 'setprop persist.bluetooth.system_audio_hal.enabled false'` + reboot (`docs/15`) |
+| `createProxy: failed to register BT port` in logcat | same provider mismatch | as above |
+| `APM failed to make available A2DP device error=1` | A2DP port never registered | as above, then verify during playback |
+| A2DP fine, calls fine, but one app silent | per-app audio routing (e.g. app pinned to speaker) | check app's audio output setting / `dumpsys audio` |
+| Earbuds mute until re-pair, only after BT restart | multi-point earbuds still attached to phone | disconnect from the other device, re-pair |
+| `getprop persist.bluetooth.system_audio_hal.enabled` empty as `shell` | SELinux denies non-root read | read via `su -c getprop …` |
+
+## 13.9 Calls / IMS / call audio
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Incoming calls never arrive, outgoing works (or has no ringback) | a **registering** IMS stack (floss-ims `me.phh.ims`) received the MT INVITE but cannot handle it (no ACK, no 180/183, SDP 503) | `pm uninstall --user 0 me.phh.ims`, `cmd overlay disable …flossims_telephony`, `setprop persist.sys.phh.ims.floss false`, reboot — calls then run on CS/CSFB (`docs/16` §16.5) |
+| Floss keeps coming back after every reboot | TrebleApp re-enables the floss overlay while `me.phh.ims` is still installed | uninstall the APK (not just disable); `auto-fix.sh` call-guard also enforces it per boot |
+| Mobile data works, calls never connect in an LTE-only area | no AIDL MTK `ImsService` on the GSI → no VoLTE (fatal on Jio `405/871`) | no known fix on this vendor; phh `ims-mtk-*` are HIDL-only. Where 2G/3G exists, calls fall back to CS/CSFB |
+| `IMS_RILA: getRadioProxy: mRadioProxy == null` every second | `ims-mtk-r/s.apk` speaks HIDL `android.hardware.radio@1.x`, vendor exposes AIDL `IRadioIms` only | expected; keep it only as a placeholder, it will never register |
+| Calls connect but ring/audio silent until Speaker is pressed | vendor policy declares a non-existent `Earpiece`; `audioserver` crashes in `connectAudioSourceToSink` | patch vendor `audio_policy_configuration.xml` (4 blocks) — `docs/16` |
+| `connectAudioSourceToSink: a swOutput shall always be associated` | same earpiece routing | as above; removing only `voice tx` is not enough |
+| `convertModuleConfigToAidl … BAD_VALUE` at boot | `<devicePort tagName="Earpiece">` left behind after route removal | remove `<item>`, `<devicePort>`, `<route sink=Earpiece>`, `<route sink="voice tx">` |
+| "4G Calling / VoLTE" switch missing in Settings | IMS not registered / `persist.dbg.volte_avail_ovr` unset | `setprop persist.dbg.volte_avail_ovr 1` + reboot (cosmetic only on this vendor) |
+| `INSTALL_FAILED_VERIFICATION_FAILURE` while installing `ims-mtk-r.apk` | Play Protect blocks `com.mediatek.ims` | `settings put global verifier_verify_adb_installs 0`, install again |
+| `persist.sys.phh.disable_voice_call_in=true` makes boot audio unstable | wrong switch for this vendor | keep it `false` |
+
+## 13.10 Collecting evidence for a bug report
 
 ```bash
 adb shell getprop > props.txt

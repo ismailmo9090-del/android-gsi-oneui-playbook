@@ -150,6 +150,42 @@ The user asked to reduce icon size. This is a per-user launcher preference
 while the launcher is stopped; it is not a system-level property. See
 `docs/13-troubleshooting.md` §13.5.
 
+### 2.9 Calls: IMS + call audio (2026-11-16)
+
+After the UI work the tablet was used with a Jio SIM: data worked, calls did not. Three problems,
+all SIM-independent:
+
+1. **Vendor declared an Earpiece the tablet does not have.** `audioserver` crashed with
+   `connectAudioSourceToSink: a swOutput shall always be associated` at call setup; with only
+   the `voice tx` route removed, Speaker had to be pressed for every call. Removed all four
+   Earpiece-related blocks from `/vendor/etc/audio_policy_configuration.xml` and rebuilt the
+   EROFS `vendor_b` (405,835,776 B) with device-captured SELinux labels, gid 2000 and fakeroot
+   metadata, then flashed it in fastbootd (10.7 s). Data untouched.
+2. **No usable MTK IMS on the GSI.** The vendor exposes **AIDL** radio
+   (`android.hardware.radio.ims.IRadioIms/slot1-2`, `…mtkradioex.ims-V2-ndk.so`), while phh's
+   `ims-mtk-r/s.apk` are HIDL-only — installed they log `IMS_RILA: getRadioProxy: mRadioProxy
+   == null` every second and never register. No stock LT4901 dump exists to extract the tablet's
+   own Android 15 IMS APK. The vendor `volte_*` daemons also never register (no SIP socket, no
+   XFRM state).
+3. **floss-ims made incoming calls worse.** With a Jio/Airtel SIM, floss (`me.phh.ims`, TCP)
+   registered successfully but never ACKed the `200 OK`, ignored 180/183, and **received zero MT
+   INVITEs** while holding the registration. Removing it restored both directions.
+   Also: TrebleApp re-enables the floss overlay on every boot while `me.phh.ims` is installed, so
+   the APK has to be uninstalled, not just disabled.
+
+**Final, verified mode: CS/CSFB.** `com.mediatek.ims` (ims-mtk-r) stays installed purely as the
+framework binding; it never registers, so MO calls fall back to GSM/WCDMA (`GsmCdmaCallTracker:
+dialGsm` in the log) and MT calls arrive over SGs paging. On Airtel (`+91 73096 83245`): outgoing
+call → `ACTIVE`, incoming call → rings and `ACTIVE`, 15 s call log entry, two-way audio, no
+earpiece press needed. Floss is uninstalled, `flossims` overlay off, `mtkims` overlay on,
+`persist.sys.phh.ims.floss=false`.
+
+Caveat: this needs 2G/3G coverage for CSFB. In an LTE-only cell, voice requires a real AIDL MTK
+IMS APK, which this device has no source for.
+
+Hashes and the rebuild flow: `docs/16-call-audio-ims.md`. Rolling back is a single
+`fastboot flash vendor_b vendor_stock_lt4901.img`.
+
 ## 3. Final state
 
 ```
@@ -159,7 +195,10 @@ Google       GMS 24.28.35, Play Store 41.9.17, WebView com.android.webview
 Font         Inter (variable)
 Home         Lawnchair 15 Beta 3 + OneUI 8.5 icon pack + gestural nav
 Root         phh-su (ROM built-in); Magisk 31.1 present but module/Zygisk stability limited
-Data         preserved through the font/UI re-flashes
+BT audio     A2DP on MediaTek vendor provider (persist.bluetooth.system_audio_hal.enabled=false)
+Calls        CS/CSFB (verified both directions); com.mediatek.ims installed as placeholder, floss removed; vendor policy without Earpiece
+Vendor       vendor_b patched (audio policy 9c4dd6d8…, 18861 B), stock image kept for rollback
+Data         preserved through the font/UI/vendor re-flashes
 ```
 
 Hashes and exact artifacts: `docs/14-verified-manifest.md`.

@@ -16,6 +16,9 @@ Machine-readable copy: [`../manifests/lava-s91-lt4901.yaml`](../manifests/lava-s
 | `td_a15_ui.img` (**final**: + Inter font) | 2,936,012,800 | `8fd8167f2fdb0e7a4c00746214387e0ba80a882d298cd2a16c3c2ccc78b9934e` |
 | `init_boot_b_stock.img` | 8,388,608 | `a2ff249a9e5fb4fb2a37ade12ba9bcf84b7f35da1172f12d22b9d119f96432b1` |
 | `init_boot_b_magisk.img` (Magisk 31.1 patched) | 8,388,608 | `a210325af7665aef5846097fb753001c14d3c50e6af46ccc1fcae256244e506f` |
+| `vendor_stock_lt4901.img` (stock `vendor_b` dump) | 405,835,776 | `f3ad6ad24a4a77965b5a336bc9ade1161d9e33f7a23ceca0f601e992a59b845b` |
+| `vendor_patched_lt4901.img` (audio policy w/o Earpiece) | 405,835,776 | `468bcd2ddd19a9cd3455bf9f3b93335628937a7de842cd0d660015de0e57750a` |
+| `ims-mtk-r.apk` (phh IMS for MTK R vendor) | 6,106,173 | `1dcdc56543d77ed1377e1345adb4110f910d286c17e0a5781c32818aac6f4a61` |
 
 Application packages used:
 
@@ -41,6 +44,11 @@ Application packages used:
 | Font | `InterVariable.ttf`, 9 refs in `/system/etc/fonts.xml` |
 | Home | `app.lawnchair/.LawnchairLauncher` |
 | Navigation | gestural overlay enabled |
+| Bluetooth audio | `persist.bluetooth.system_audio_hal.enabled=false` (MTK vendor provider) |
+| Call audio | vendor policy without Earpiece — `9c4dd6d8…`, 18861 B; speaker is default output |
+| Voice mode | **CS/CSFB only** — no IMS stack registers on this vendor (AIDL radio vs HIDL-only phh APKs). Incoming + outgoing verified on Airtel. |
+| IMS | `com.mediatek.ims` (`ims-mtk-r`) is installed as a framework placeholder only; overlay `me.phh.treble.overlay.mtkims_telephony` on, `…flossims_telephony` off, `me.phh.ims` (floss) uninstalled |
+| IMS props | `vilte_support=0`, `disable_voice_call_in=false`, `ims.floss=false`, `volte_avail_ovr=1`, `wfc_avail_ovr=1`, `allow_ims_off=0` |
 | Display | 240 dpi, 4096-byte pages |
 | Data | preserved (no wipe during font/UI re-flash) |
 
@@ -106,7 +114,33 @@ adb shell cmd overlay enable-exclusive --category \
 adb shell bootctl mark-boot-successful
 ```
 
-## 14.6 Known deviations from a stock experience
+## 14.6 Vendor audio policy + IMS (call fix)
+
+Stock vendor policy is 19587 B (`ae815b68…`); the patched one is 18861 B (`9c4dd6d8…`), with the
+Earpiece `<item>`, `<devicePort>`, sink route and the `voice tx` route removed (detail:
+[`16-call-audio-ims.md`](16-call-audio-ims.md)).
+
+```bash
+# call fix on a booted tablet (vendor policy + CS/CSFB lock + reboot + verify)
+./call-audio-fix.sh
+./call-audio-fix.sh --verify
+./call-audio-fix.sh --rollback          # stock vendor_b back
+
+# manual equivalent of the vendor half
+adb reboot fastboot
+fastboot getvar is-userspace            # yes
+fastboot getvar current-slot            # b
+fastboot flash vendor_b vendor_patched_lt4901.img
+fastboot reboot
+```
+
+The patched image was rebuilt from the device's own dump with `erofs-utils` 1.9
+(`-zlz4hc,9 -C16384`, same UUID), SELinux labels captured with `stat -c '%C'` on the live
+`/vendor`, gid 0/2000 and modes restored through `fakeroot`, then loop-mounted on the device and
+compared path-by-path (2480/2480 labels and metadata match) before flashing. No AVB hashtree is
+needed because the kit already flashes an empty `vbmeta` (`verifiedbootstate=orange`).
+
+## 14.7 Known deviations from a stock experience
 
 - No Lava OTA, no stock recovery images, no way back without vendor firmware.
 - Play Integrity / banking apps fail (unlocked bootloader + test-keys).

@@ -64,6 +64,53 @@ images:
     sha256: "8fd8167f2fdb0e7a4c00746214387e0ba80a882d298cd2a16c3c2ccc78b9934e"
     changes: "with_gapps + Inter variable font in sans-serif family"
 
+vendor_images:            # EROFS audio-policy fix — see docs/16
+  vendor_stock:
+    file: "vendor_stock_lt4901.img"
+    partition_bytes: 405835776
+    sha256: "f3ad6ad24a4a77965b5a336bc9ade1161d9e33f7a23ceca0f601e992a59b845b"
+    audio_policy_sha256: "ae815b685a062a6ec784d38cba3a76e24f48f7c2bd07882cbbfd1888581da121"
+    note: "stock vendor_b dump; fastboot flash vendor_b <this> = rollback"
+  vendor_patched:
+    file: "vendor_patched_lt4901.img"
+    partition_bytes: 405835776
+    sha256: "468bcd2ddd19a9cd3455bf9f3b93335628937a7de842cd0d660015de0e57750a"
+    audio_policy_bytes: 18861
+    audio_policy_sha256: "9c4dd6d8e82f6f5ced6557ac25ef9a4bf7fd458d07bf62227f7c5266a1c1e4b7"
+    rebuild: "erofs-utils 1.9; lz4hc,9 -C16384; UUID 66151b1b-874a-5fd2-a025-a59946b213cb; device-captured SELinux labels; gid 0/2000; no AVB hashtree needed (verifiedbootstate=orange)"
+    change: "removes Earpiece item/devicePort/route + voice tx route from /vendor/etc/audio_policy_configuration.xml"
+
+ims:
+  mode: "cs-csfb"                       # calls carry over CS/CSFB; NO IMS stack may register
+  apk_file: "ims-mtk-r.apk"
+  url: "https://treble.phh.me/stable/ims-mtk-r.apk"
+  sha256: "1dcdc56543d77ed1377e1345adb4110f910d286c17e0a5781c32818aac6f4a61"
+  package: "com.mediatek.ims"
+  package_role: "framework ImsService binding only - HIDL-only APK, never registers on this AIDL-radio vendor"
+  selection: "vendor.mediatek.hardware.mtkradioex.ims.IMtkRadioExIms @2.0 present on both slots"
+  overlay: "me.phh.treble.overlay.mtkims_telephony"
+  must_not_install:
+    - package: "me.phh.ims"
+      reason: "floss-ims registers SIP and then drops/never receives MT INVITEs - incoming calls stop; TrebleApp re-enables its overlay every boot while installed"
+    - overlay: "me.phh.treble.overlay.flossims_telephony"
+      reason: "must stay disabled; TrebleApp auto-enables it when me.phh.ims is present"
+  props:
+    persist.vendor.vilte_support: "0"
+    persist.sys.phh.disable_voice_call_in: "false"
+    persist.sys.phh.ims.floss: "false"
+    persist.dbg.volte_avail_ovr: "1"
+    persist.dbg.wfc_avail_ovr: "1"
+    persist.dbg.allow_ims_off: "0"
+  prefs:
+    key_ims_request_network: "true"
+    key_ims_force_enable_setting: "true"
+  verified:
+    operator: "Airtel IN (405/54), SIM slot 0"
+    outgoing: "CS (GsmCdmaCallTracker dialGsm) -> ACTIVE, call log duration > 0"
+    incoming: "rings + ACTIVE over SGs/CSFB, call log type=INCOMING duration 15s"
+    date: "2026-11-16"
+  guard: "auto-fix.sh call_guard runs once per boot: uninstall me.phh.ims, flossims off, mtkims on, ims.floss=false"
+
 boot_images:
   init_boot_b_stock:
     file: "init_boot_b_stock.img"
@@ -101,12 +148,15 @@ final_state:
   slot: "b"
   slot_marked_successful: true
   verified_boot_state: "orange"
+  call_audio: "vendor policy without Earpiece; speaker is default output"
+  ims: "CS/CSFB only; com.mediatek.ims installed as placeholder, floss-ims removed"
   font: "InterVariable.ttf (9 refs in /system/etc/fonts.xml)"
   navigation: "gestural"
   data_wiped_after_initial_flash: false
 
 known_limitations:
   - "No public stock firmware: cannot return to the OEM ROM"
+  - "Voice needs 2G/3G for CSFB: an LTE-only cell cannot place/receive calls (no AIDL MTK IMS APK available)"
   - "Slot A physically empty: no rescue slot"
   - "Play Integrity / banking apps fail"
   - "Magisk + Zygisk modules unreliable due to built-in phh-su"
